@@ -11,7 +11,7 @@ if (typeof a !== "number" || typeof b !== "number") {
         result: a + b
     });
 };
-exports.substract = (req, res) => {
+exports.subtract = (req, res) => {
     const { a, b } = req.body;
 
     if (typeof a !== "number" || typeof b !== "number") {

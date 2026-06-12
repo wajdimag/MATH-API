@@ -4,7 +4,7 @@ const router = express.Router();
 const mathController = require('../controllers/mathController');
 
 router.post('/add', mathController.add);
-router.post('/substract',mathController.substract);
+router.post('/subtract',mathController.subtract);
 router.post('/multiply',mathController.multiply);
 router.post('/divide',mathController.divide);
 router.post('/power',mathController.power);
