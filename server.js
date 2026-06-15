@@ -2,7 +2,7 @@ const express = require('express');
 
 const app = express();
 
-const mathRoutes = require('./routes/mathRoutes');
+const mathRoutes = require('./Routes/MathRoutes');
 
 app.use(express.json());
 
