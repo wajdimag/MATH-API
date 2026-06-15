@@ -1,13 +1,12 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = 'math-api'
-        PORT       = '3000'
+    tools {
+        // Tells Jenkins to load the Node environment we configured in the Tools dashboard
+        nodejs 'node'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 echo '📥 Cloning code from GitHub...'
@@ -24,41 +23,25 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo '🧪 Running unit tests...'
+                echo '🧪 Running Jest test suite...'
                 sh 'npm test'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker image...'
-                sh 'docker build -t ${IMAGE_NAME} .'
-            }
-        }
-
-        stage('Deploy with Docker Compose') {
-            steps {
-                echo '🚀 Deploying with docker-compose...'
-                sh 'docker-compose down || true'
-                sh 'docker-compose up -d --build'
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                echo '❤️ Checking API health...'
-                sh 'sleep 10'
-                sh 'curl -f http://localhost:3000/health'
+                echo '🐳 Compiling API into production container...'
+                sh 'docker build -t math-api:latest .'
             }
         }
     }
-
+    
     post {
-        success {
-            echo '✅ Pipeline completed successfully!'
-        }
         failure {
             echo '❌ Pipeline failed — check logs above'
+        }
+        success {
+            echo '✅ Pipeline passed cleanly!'
         }
     }
 }
