@@ -9,7 +9,8 @@ pipeline {
         stage('Gitleaks (Secrets Detection)') {
             steps {
                 echo '🔍 Scanning repository for exposed keys, secrets, or tokens...'
-                sh 'docker run --rm -v $(pwd):/path zricethezaza/gitleaks:latest detect --source=/path --verbose || true'
+                // Fixed: Changed from zricethezaza to the official gitleaks/gitleaks repository
+                sh 'docker run --rm -v $(pwd):/path gitleaks/gitleaks:latest detect --source=/path --verbose || true'
             }
         }
 
@@ -19,8 +20,6 @@ pipeline {
                     withSonarQubeEnv('sonar') {
                         echo '📊 Executing Static Application Security Testing (SAST)...'
                         def scannerHome = tool 'sonar-scanner'
-                        
-                        // Using a clean triple-quoted string on a single line avoids all multi-line whitespace issues
                         sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=Math-API -Dsonar.projectName=Math-API -Dsonar.sources=. -Dsonar.exclusions=**/node_modules/**,**/Tests/**"
                     }
                 }
@@ -51,9 +50,9 @@ pipeline {
         stage('Trivy (Container Scan)') {
             steps {
                 echo '🛡️ Scanning final Docker image for OS vulnerabilities...'
-                // Using triple quotes here lets us run the database reset and scanner sequentially without spacing bugs
+                // Fixed: Replaced the old '--reset' flag with the modern 'clean --all' syntax
                 sh '''
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --reset
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest clean --all
                     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL math-api:latest || echo "⚠️ Trivy database download timed out, skipping scan check for this run."
                 '''
             }
