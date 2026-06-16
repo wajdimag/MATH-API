@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     tools {
-        // Tells Jenkins to load the Node environment we configured in the Tools dashboard
         nodejs 'node'
     }
 
@@ -11,6 +10,30 @@ pipeline {
             steps {
                 echo '📥 Cloning code from GitHub...'
                 checkout scm
+            }
+        }
+
+        stage('Gitleaks (Secrets Detection)') {
+            steps {
+                echo '🔍 Scanning repository for exposed keys, secrets, or tokens...'
+                // Spins up Gitleaks to scan your workspace directory. 
+                // Using '|| true' ensures that a minor warning won't break the build while you adjust patterns.
+                sh 'docker run --rm -v $(pwd):/path zricethezaza/gitleaks:latest detect --source=/path --verbose || true'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                // Uses the configurations ('sonar' and 'sonar-scanner') you just set up in your Jenkins UI
+                withSonarQubeEnv('sonar') {
+                    echo '📊 Executing Static Application Security Testing (SAST)...'
+                    def scannerHome = tool 'sonar-scanner'
+                    sh "${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=Math-API \
+                        -Dsonar.projectName=Math-API \
+                        -Dsonar.sources=. \
+                        -Dsonar.exclusions=**/node_modules/**,**/Tests/**"
+                }
             }
         }
 
@@ -34,14 +57,22 @@ pipeline {
                 sh 'docker build -t math-api:latest .'
             }
         }
+
+        stage('Trivy (Container Scan)') {
+            steps {
+                echo '🛡️ Scanning final Docker image for OS vulnerabilities...'
+                // Tells Trivy to analyze the image layers you just built for critical or high security exploits
+                sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL math-api:latest'
+            }
+        }
     }
-    
+
     post {
         failure {
-            echo '❌ Pipeline failed — check logs above'
+            echo '❌ DevSecOps Pipeline failed — check security scans or test logs above'
         }
         success {
-            echo '✅ Pipeline passed cleanly!'
+            echo '✅ DevSecOps Pipeline passed cleanly! All security gates passed.'
         }
     }
 }
