@@ -6,13 +6,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo '📥 Cloning code from GitHub...'
-                checkout scm
-            }
-        }
-
         stage('Gitleaks (Secrets Detection)') {
             steps {
                 echo '🔍 Scanning repository for exposed keys, secrets, or tokens...'
@@ -22,7 +15,6 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // The script block allows variable declarations like 'def' without breaking syntax
                 script {
                     withSonarQubeEnv('sonar') {
                         echo '📊 Executing Static Application Security Testing (SAST)...'
