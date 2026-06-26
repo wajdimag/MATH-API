@@ -9,9 +9,8 @@ pipeline {
         stage('Gitleaks (Secrets Detection)') {
             steps {
                 echo '🔍 Scanning repository for exposed keys, secrets, or tokens...'
-                // ENFORCED BLOCKING RULE: Uses the correct zricethezav repository.
-                // No '|| true' appended, so any detected secret will block the build.
-                sh 'docker run --rm -v $(pwd):/path zricethezav/gitleaks:latest detect --source=/path --verbose'
+                // FIX: Added --no-git to scan the current files cleanly without Git ownership errors.
+                sh 'docker run --rm -v $(pwd):/path zricethezav/gitleaks:latest detect --source=/path --no-git --verbose'
             }
         }
 
@@ -50,11 +49,14 @@ pipeline {
 
         stage('Trivy (Container Scan)') {
             steps {
-                echo '🛡️ Scanning final Docker image for OS vulnerabilities...'
-                sh '''
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest clean --all
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL math-api:latest || echo "⚠️ Trivy database download timed out, skipping scan check for this run."
-                '''
+                echo '🛡️ Scanning final Docker image for OS vulnerabilities (with auto-retry)...'
+                // FIX: If the DB download fails due to network, Jenkins will automatically retry up to 3 times.
+                retry(3) {
+                    sh '''
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest clean --all
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL math-api:latest
+                    '''
+                }
             }
         }
     }
