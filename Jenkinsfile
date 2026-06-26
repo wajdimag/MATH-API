@@ -9,8 +9,9 @@ pipeline {
         stage('Gitleaks (Secrets Detection)') {
             steps {
                 echo '🔍 Scanning repository for exposed keys, secrets, or tokens...'
-                // Fixed: Changed from zricethezaza to the official gitleaks/gitleaks repository
-                sh 'docker run --rm -v $(pwd):/path gitleaks/gitleaks:latest detect --source=/path --verbose || true'
+                // ENFORCED BLOCKING RULE: '|| true' has been removed. 
+                // If secrets are found, the pipeline stops here.
+                sh 'docker run --rm -v $(pwd):/path gitleaks/gitleaks:latest detect --source=/path --verbose'
             }
         }
 
@@ -50,7 +51,7 @@ pipeline {
         stage('Trivy (Container Scan)') {
             steps {
                 echo '🛡️ Scanning final Docker image for OS vulnerabilities...'
-                // Fixed: Replaced the old '--reset' flag with the modern 'clean --all' syntax
+                // Clean cache, then scan the final image
                 sh '''
                     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest clean --all
                     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL math-api:latest || echo "⚠️ Trivy database download timed out, skipping scan check for this run."
