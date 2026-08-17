@@ -54,9 +54,10 @@ pipeline {
         stage('Security Gate (Trivy Scan)') {
             steps {
                 retry(2) {
-                    // Strictly fails the build if HIGH or CRITICAL vulnerabilities are found
                     sh '''
-                        trivy image \
+                        docker run --rm \
+                          -v /var/run/docker.sock:/var/run/docker.sock \
+                          aquasec/trivy:latest image \
                           --exit-code 1 \
                           --severity HIGH,CRITICAL \
                           --no-progress \
