@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         GHCR_REGISTRY = 'ghcr.io'
-        IMAGE_NAME = 'your-github-username/math-api'
+        IMAGE_NAME = 'wajdimag/math-api'
         DB_CONTAINER = 'math-db'
         DB_VOLUME = 'math_db_data'
     }
