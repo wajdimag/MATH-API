@@ -2,6 +2,8 @@ const express = require('express');
 
 const app = express();
 
+app.disable('x-powered-by'); // Hide the X-Powered-By: Express (sonarqube)
+
 const mathRoutes = require('./Routes/MathRoutes');
 
 app.use(express.json());
