@@ -18,11 +18,6 @@ function getKey(header, callback) {
 }
 
 const verifyToken = (req, res, next) => {
-  // Bypass token check during automated Jest test runs in Jenkins
-  if (process.env.NODE_ENV === 'test') {
-    return next();
-  }
-
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
