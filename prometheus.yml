@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+rule_files:
+  - 'alert.rules.yml'
+
+scrape_configs:
+  - job_name: 'math-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['math-api:3000']

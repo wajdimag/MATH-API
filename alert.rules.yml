@@ -1,0 +1,11 @@
+groups:
+  - name: math_api_alerts
+    rules:
+      - alert: MathApiDown
+        expr: up{job="math-api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Math API instance down"
+          description: "Math API container target is offline for more than 30 seconds."
