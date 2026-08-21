@@ -1,5 +1,6 @@
 const express = require('express');
 const client = require('prom-client');
+const os = require('os'); // Imported OS module to retrieve container hostname
 
 const app = express();
 
@@ -34,9 +35,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Public healthcheck route 
+// Public healthcheck route (returns status + unique container ID)
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'UP' });
+    res.status(200).json({ 
+        status: 'UP',
+        container: os.hostname()
+    });
 });
 
 // Public Prometheus metrics route (Unauthenticated)
