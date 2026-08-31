@@ -9,11 +9,20 @@ pipeline {
     }
 
     stages {
-        stage('Checkout & Setup') {
+        stage('Checkout SCM') {
             steps {
                 retry(3) {
                     checkout scm
                 }
+            }
+        }
+
+        stage('Automated Testing') {
+            steps {
+                sh '''
+                    npm ci
+                    npm test
+                '''
             }
         }
 
@@ -49,7 +58,7 @@ pipeline {
             }
         }
 
-       stage('Security Gate (Trivy Scan)') {
+        stage('Security Gate (Trivy Scan)') {
             steps {
                 retry(2) {
                     sh '''
@@ -63,6 +72,15 @@ pipeline {
                           ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
                     '''
                 }
+            }
+        }
+
+        stage('Deployment') {
+            steps {
+                sh '''
+                    docker compose down || true
+                    docker compose up -d --build
+                '''
             }
         }
     }
