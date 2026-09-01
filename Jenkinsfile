@@ -24,7 +24,7 @@ pipeline {
                       -v $WORKSPACE:/usr/src/app \
                       -w /usr/src/app \
                       node:18-alpine \
-                      sh -c "npm install && npm test"
+                      sh -c "npm ci && npm test"
                 '''
             }
         }
