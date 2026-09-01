@@ -103,8 +103,7 @@ pipeline {
         stage('Deployment') {
             steps {
                 sh '''
-                    docker stop math-api || true
-                    docker rm math-api || true
+                    docker rm -f math-api_math-api_1 math-api || true
                     docker run -d \
                       --name math-api \
                       --network math-api_default \
