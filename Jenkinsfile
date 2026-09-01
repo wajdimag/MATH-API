@@ -103,7 +103,7 @@ pipeline {
         stage('Deployment') {
             steps {
                 sh '''
-                    docker-compose up -d --build --no-deps math-api
+                    docker compose up -d --build --no-deps math-api
                 '''
             }
         }
