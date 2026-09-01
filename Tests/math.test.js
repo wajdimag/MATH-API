@@ -149,5 +149,6 @@ describe('Math API Comprehensive Endpoints Suite', () => {
             expect(res.body).toHaveProperty('container');
         });
     });
-    });
+
 });
+    
