@@ -31,8 +31,8 @@ pipeline {
                 sh '''
                     docker run --rm \
                       -v $(pwd):/path \
-                      zricethezav/gitleaks:latest detect \
-                      --source="/path" \
+                      zricethezav/gitleaks:latest dir \
+                      /path \
                       --verbose || true
                 '''
             }
