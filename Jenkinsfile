@@ -17,14 +17,14 @@ pipeline {
             }
         }
 
-    stage('Automated Testing') {
-        steps {
-            sh '''
-                docker build -t ${IMAGE_NAME}:test .
-                docker run --rm ${IMAGE_NAME}:test npm test
-            '''
-    }
-}
+        stage('Automated Testing') {
+            steps {
+                sh '''
+                    docker build -t ${IMAGE_NAME}:test .
+                    docker run --rm ${IMAGE_NAME}:test npm test
+                '''
+            }
+        }
 
         stage('Persistent DB Gate') {
             steps {
@@ -77,10 +77,12 @@ pipeline {
 
         stage('Deployment') {
             steps {
-                    sh 'docker-compose down || true'
-                    sh 'docker-compose up -d --build'
+                sh '''
+                    docker-compose stop math-api || true
+                    docker-compose rm -f math-api || true
+                    docker-compose up -d --build math-api
+                '''
             }
         }
     }
 }
-
