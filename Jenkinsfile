@@ -103,7 +103,17 @@ pipeline {
         stage('Deployment') {
             steps {
                 sh '''
-                    docker compose up -d --build --no-deps math-api
+                    docker stop math-api || true
+                    docker rm math-api || true
+                    docker run -d \
+                      --name math-api \
+                      --network math-api_default \
+                      -p 3000:3000 \
+                      -e NODE_ENV=production \
+                      -e PORT=3000 \
+                      -e KEYCLOAK_URL=http://keycloak:8080 \
+                      --restart unless-stopped \
+                      ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
                 '''
             }
         }
