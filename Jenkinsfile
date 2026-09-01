@@ -78,9 +78,7 @@ pipeline {
         stage('Deployment') {
             steps {
                 sh '''
-                    docker-compose stop math-api || true
-                    docker-compose rm -f math-api || true
-                    docker-compose up -d --build math-api
+                    docker-compose up -d --build --no-deps math-api
                 '''
             }
         }
