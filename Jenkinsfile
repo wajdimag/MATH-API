@@ -26,6 +26,31 @@ pipeline {
             }
         }
 
+        stage('Gitleaks Secret Scan') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v $(pwd):/path \
+                      zricethezav/gitleaks:latest detect \
+                      --source="/path" \
+                      --verbose || true
+                '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      --network math-api_default \
+                      -v "$(pwd):/usr/src" \
+                      sonarsource/sonar-scanner-cli \
+                      -Dsonar.host.url="http://sonarqube:9000" \
+                      -Dsonar.projectKey="math-api" || true
+                '''
+            }
+        }
+
         stage('Persistent DB Gate') {
             steps {
                 sh '''
