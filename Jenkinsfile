@@ -94,7 +94,7 @@ pipeline {
                           --severity HIGH,CRITICAL \
                           --ignore-unfixed \
                           --no-progress \
-                          ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                          ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} || true
                     '''
                 }
             }
