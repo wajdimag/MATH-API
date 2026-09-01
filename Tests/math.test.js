@@ -146,7 +146,8 @@ describe('Math API Comprehensive Endpoints Suite', () => {
             const res = await request(app).get('/health');
             expect(res.statusCode).toBe(200);
             expect(res.body.status).toBe("UP");
-            expect(res.body).toHaveProperty('timestamp');
+            expect(res.body).toHaveProperty('container');
         });
+    });
     });
 });
