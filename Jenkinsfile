@@ -17,17 +17,14 @@ pipeline {
             }
         }
 
-        stage('Automated Testing') {
-            steps {
-                sh '''
-                    docker run --rm \
-                      -v $WORKSPACE:/usr/src/app \
-                      -w /usr/src/app \
-                      node:18-alpine \
-                      sh -c "npm ci && npm test"
-                '''
-            }
-        }
+    stage('Automated Testing') {
+        steps {
+            sh '''
+                docker build -t ${IMAGE_NAME}:test .
+                docker run --rm ${IMAGE_NAME}:test npm test
+            '''
+    }
+}
 
         stage('Persistent DB Gate') {
             steps {
