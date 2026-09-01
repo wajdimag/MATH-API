@@ -77,11 +77,10 @@ pipeline {
 
         stage('Deployment') {
             steps {
-                sh '''
-                    docker-compose down || true
-                    docker-compose up -d --build
-                '''
+                    sh 'docker-compose down || true'
+                    sh 'docker-compose up -d --build'
             }
         }
     }
 }
+
