@@ -1,3 +1,5 @@
+// Mock auth middleware 
+jest.mock('../auth', () => (req, res, next) => next());
 const request = require('supertest');
 const app = require('../server'); // Path to your server.js
 
