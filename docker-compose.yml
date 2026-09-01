@@ -4,8 +4,8 @@ services:
 
   math-api:
     build: .
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
