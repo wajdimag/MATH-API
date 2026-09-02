@@ -30,6 +30,13 @@ const verifyToken = (req, res, next) => {
     if (err) {
       return res.status(403).json({ error: 'Access Denied: Invalid or expired token', details: err.message });
     }
+
+    // --- RBAC Check ---
+    const roles = decoded.realm_access?.roles || [];
+    if (!roles.includes('math-user')) {
+      return res.status(403).json({ error: 'Access Denied: Missing required [math-user] role' });
+    }
+
     req.user = decoded;
     next();
   });
