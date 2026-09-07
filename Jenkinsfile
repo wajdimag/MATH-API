@@ -1,6 +1,9 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true) // <-- ADD THIS, this removes the hidden automatic checkout
+    }	
     environment {
         GHCR_REGISTRY = 'ghcr.io'
         IMAGE_NAME    = 'wajdimag/math-api'
