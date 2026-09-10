@@ -23,8 +23,10 @@ pipeline {
         stage('Automated Testing') {
             steps {
                 sh '''
-                    docker build -t ${IMAGE_NAME}:test .
-                    docker run --rm ${IMAGE_NAME}:test npm test
+                    // 1. Build temporary image targeting the 'builder' stage
+        	    sh 'docker build --target builder -t wajdimag/math-api:test .'
+                    // 2. Run unit tests inside the builder container
+        	    sh 'docker run --rm wajdimag/math-api:test npm test'
                 '''
             }
         }
