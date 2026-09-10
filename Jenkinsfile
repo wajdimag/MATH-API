@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     options {
-        skipDefaultCheckout(true) // <-- this removes the hidden automatic checkout
+        skipDefaultCheckout(true)
     }	
     environment {
         GHCR_REGISTRY = 'ghcr.io'
@@ -22,11 +22,8 @@ pipeline {
 
         stage('Automated Testing') {
             steps {
-                sh '''
-                   
-        	    sh 'docker build --target builder -t wajdimag/math-api:test .'
-        	    sh 'docker run --rm wajdimag/math-api:test npm test'
-                '''
+                sh 'docker build --target builder -t wajdimag/math-api:test .'
+                sh 'docker run --rm wajdimag/math-api:test npm test'
             }
         }
 
