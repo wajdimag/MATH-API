@@ -13,6 +13,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout SCM') {
             steps {
                 retry(3) {
@@ -41,7 +42,6 @@ pipeline {
                     ls -la
                     echo "===== SOURCE FILES ====="
                     find . -maxdepth 3 -type f | head -n 50
-
                     docker run --rm \
                         -v $(pwd):/path \
                         zricethezav/gitleaks:latest dir \
@@ -78,10 +78,9 @@ pipeline {
                                 postgres:15-alpine
                         fi
                     fi
-
-                    echo "Checking DB container availability and persistent storage..."
+                    echo "Checking DB container status..."
                     docker inspect -f '{{.State.Running}}' ${DB_CONTAINER}
-                    docker volume inspect ${DB_VOLUME} || echo "Volume ${DB_VOLUME} will be created"
+                    docker volume inspect ${DB_VOLUME} || echo "Volume will be created"
                 '''
             }
         }
@@ -89,11 +88,17 @@ pipeline {
         stage('Build & Push GHCR Image') {
             steps {
                 retry(3) {
-                    withCredentials([usernamePassword(credentialsId: 'ghcr-credentials', passwordVariable: 'GHCR_TOKEN', usernameVariable: 'GHCR_USER')]) {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'ghcr-credentials',
+                        passwordVariable: 'GHCR_TOKEN',
+                        usernameVariable: 'GHCR_USER')]) {
                         sh '''
-                            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-                            docker build -t ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} .
-                            docker push ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                            echo "$GHCR_TOKEN" | docker login ghcr.io \
+                                -u "$GHCR_USER" --password-stdin
+                            docker build \
+                                -t ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} .
+                            docker push \
+                                ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
                         '''
                     }
                 }
@@ -128,4 +133,21 @@ pipeline {
                         -e NODE_ENV=production \
                         -e PORT=3000 \
                         -e KEYCLOAK_URL=http://keycloak:8080 \
-                        --restart
+                        --restart unless-stopped \
+                        ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed — check logs above!'
+        }
+    }
+
+}
