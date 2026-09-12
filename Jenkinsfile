@@ -3,7 +3,8 @@ pipeline {
 
     options {
         skipDefaultCheckout(true)
-    }	
+    }
+
     environment {
         GHCR_REGISTRY = 'ghcr.io'
         IMAGE_NAME    = 'wajdimag/math-api'
@@ -20,21 +21,32 @@ pipeline {
             }
         }
 
+        stage('Install Dependencies') {
+            steps {
+                sh 'docker build --target builder -t wajdimag/math-api:builder .'
+            }
+        }
+
         stage('Automated Testing') {
             steps {
-                sh 'docker build --target builder -t wajdimag/math-api:test .'
-                sh 'docker run --rm wajdimag/math-api:test npm test'
+                sh 'docker run --rm wajdimag/math-api:builder npm test'
             }
         }
 
         stage('Gitleaks Secret Scan') {
             steps {
                 sh '''
+                    pwd
+                    echo "===== WORKSPACE CONTENT ====="
+                    ls -la
+                    echo "===== SOURCE FILES ====="
+                    find . -maxdepth 3 -type f | head -n 50
+
                     docker run --rm \
-                      -v $(pwd):/path \
-                      zricethezav/gitleaks:latest dir \
-                      /path \
-                      --verbose || true
+                        -v $(pwd):/path \
+                        zricethezav/gitleaks:latest dir \
+                        /path \
+                        --verbose || true
                 '''
             }
         }
@@ -43,16 +55,16 @@ pipeline {
             steps {
                 sh '''
                     docker run --rm \
-                      --network math-api_default \
-                      -v "$(pwd):/usr/src" \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.host.url="http://sonarqube:9000" \
-                      -Dsonar.projectKey="math-api" || true
+                        --network math-api_default \
+                        -v "$(pwd):/usr/src" \
+                        sonarsource/sonar-scanner-cli \
+                        -Dsonar.host.url="http://sonarqube:9000" \
+                        -Dsonar.projectKey="math-api" || true
                 '''
             }
         }
 
-        stage('Persistent DB Gate') {
+        stage('Persistent Database Gate') {
             steps {
                 sh '''
                     if [ ! "$(docker ps -q -f name=${DB_CONTAINER})" ]; then
@@ -60,12 +72,16 @@ pipeline {
                             docker start ${DB_CONTAINER}
                         else
                             docker run -d \
-                              --name ${DB_CONTAINER} \
-                              -v ${DB_VOLUME}:/var/lib/postgresql/data \
-                              --restart unless-stopped \
-                              postgres:15-alpine
+                                --name ${DB_CONTAINER} \
+                                -v ${DB_VOLUME}:/var/lib/postgresql/data \
+                                --restart unless-stopped \
+                                postgres:15-alpine
                         fi
                     fi
+
+                    echo "Checking DB container availability and persistent storage..."
+                    docker inspect -f '{{.State.Running}}' ${DB_CONTAINER}
+                    docker volume inspect ${DB_VOLUME} || echo "Volume ${DB_VOLUME} will be created"
                 '''
             }
         }
@@ -89,13 +105,13 @@ pipeline {
                 retry(2) {
                     sh '''
                         docker run --rm \
-                          -v /var/run/docker.sock:/var/run/docker.sock \
-                          aquasec/trivy:latest image \
-                          --exit-code 0 \
-                          --severity HIGH,CRITICAL \
-                          --ignore-unfixed \
-                          --no-progress \
-                          ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} || true
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --exit-code 0 \
+                            --severity HIGH,CRITICAL \
+                            --ignore-unfixed \
+                            --no-progress \
+                            ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} || true
                     '''
                 }
             }
@@ -106,16 +122,10 @@ pipeline {
                 sh '''
                     docker rm -f math-api_math-api_1 math-api || true
                     docker run -d \
-                      --name math-api \
-                      --network math-api_default \
-                      -p 3000:3000 \
-                      -e NODE_ENV=production \
-                      -e PORT=3000 \
-                      -e KEYCLOAK_URL=http://keycloak:8080 \
-                      --restart unless-stopped \
-                      ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
-                '''
-            }
-        }
-    }
-}
+                        --name math-api \
+                        --network math-api_default \
+                        -p 3000:3000 \
+                        -e NODE_ENV=production \
+                        -e PORT=3000 \
+                        -e KEYCLOAK_URL=http://keycloak:8080 \
+                        --restart
