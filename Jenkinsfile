@@ -37,19 +37,15 @@ pipeline {
         stage('Gitleaks Secret Scan') {
             steps {
                 sh '''
-                    pwd
-                    echo "===== WORKSPACE CONTENT ====="
-                    ls -la
-                    echo "===== SOURCE FILES ====="
-                    find . -maxdepth 3 -type f | head -n 50
                     docker run --rm \
                         -v $(pwd):/path \
-                        zricethezav/gitleaks:latest dir \
-                        /path \
+                        zricethezav/gitleaks:latest detect \
+                        --source=/path \
+                        --no-git \
                         --verbose || true
                 '''
-            }
-        }
+    }
+}
 
         stage('SonarQube Analysis') {
             steps {
