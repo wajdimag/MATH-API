@@ -62,7 +62,7 @@ pipeline {
                             sonarsource/sonar-scanner-cli \
                             -Dsonar.host.url="http://sonarqube:9000" \
                             -Dsonar.projectKey="math-api" \
-                            -Dsonar.login="${SONAR_TOKEN}"
+                            -Dsonar.token="${SONAR_TOKEN}"
                     '''
                 }
             }
@@ -117,3 +117,60 @@ pipeline {
                     sh '''
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --exit-code 0 \
+                            --severity HIGH,CRITICAL \
+                            --ignore-unfixed \
+                            --no-progress \
+                            ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                    '''
+                }
+            }
+        }
+
+        stage('Build & Push GHCR Image') {
+            steps {
+                retry(3) {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'ghcr-credentials',
+                        passwordVariable: 'GHCR_TOKEN',
+                        usernameVariable: 'GHCR_USER')]) {
+                        sh '''
+                            echo "$GHCR_TOKEN" | docker login ghcr.io \
+                                -u "$GHCR_USER" --password-stdin
+                            docker push \
+                                ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deployment') {
+            steps {
+                sh '''
+                    docker rm -f math-api_math-api_1 math-api || true
+                    docker run -d \
+                        --name math-api \
+                        --network math-api_default \
+                        -p 3000:3000 \
+                        -e NODE_ENV=production \
+                        -e PORT=3000 \
+                        -e KEYCLOAK_URL=http://keycloak:8080 \
+                        --restart unless-stopped \
+                        ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed — check stage logs above!'
+        }
+    }
+}
