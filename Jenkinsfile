@@ -58,7 +58,7 @@ pipeline {
                             -v "$(pwd):/usr/src" \
                             sonarsource/sonar-scanner-cli \
                             -Dsonar.host.url="http://sonarqube:9000" \
-                            -Dsonar.projectKey="math-api" \
+                            -Dsonar.projectKey="Math-API" \
                             -Dsonar.login="${SONAR_TOKEN}"
                     '''
                 }
