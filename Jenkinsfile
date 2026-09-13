@@ -52,7 +52,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv('Sonar') {
                     sh '''
                         docker run --rm \
                             --network math-api_default \
