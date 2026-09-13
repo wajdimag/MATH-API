@@ -36,26 +36,40 @@ pipeline {
 
         stage('Gitleaks Secret Scan') {
             steps {
-        	sh '''
-            	    tar -cf - --exclude='.git' . | docker run --rm -i --entrypoint sh zricethezav/gitleaks:latest -c "
-                        mkdir -p /tmp/scan && \
-                        tar -xf - -C /tmp/scan && \
-                        gitleaks dir /tmp/scan --verbose
-                    " || true
+                sh '''
+                    tar -cf - --exclude='.git' . | \
+                    docker run --rm -i \
+                        --entrypoint sh \
+                        zricethezav/gitleaks:latest \
+                        -c "
+                            mkdir -p /tmp/scan && \
+                            tar -xf - -C /tmp/scan && \
+                            gitleaks dir /tmp/scan --verbose
+                        "
                 '''
-    }
-}
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
-                sh '''
-                    docker run --rm \
-                        --network math-api_default \
-                        -v "$(pwd):/usr/src" \
-                        sonarsource/sonar-scanner-cli \
-                        -Dsonar.host.url="http://sonarqube:9000" \
-                        -Dsonar.projectKey="math-api" || true
-                '''
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                        docker run --rm \
+                            --network math-api_default \
+                            -v "$(pwd):/usr/src" \
+                            sonarsource/sonar-scanner-cli \
+                            -Dsonar.host.url="$SONAR_HOST_URL" \
+                            -Dsonar.projectKey="math-api"
+                    '''
+                }
+            }
+        }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
@@ -63,6 +77,7 @@ pipeline {
             steps {
                 sh '''
                     if [ ! "$(docker ps -q -f name=${DB_CONTAINER})" ]; then
+
                         if [ "$(docker ps -aq -f status=exited -f name=${DB_CONTAINER})" ]; then
                             docker start ${DB_CONTAINER}
                         else
@@ -72,31 +87,34 @@ pipeline {
                                 --restart unless-stopped \
                                 postgres:15-alpine
                         fi
+
                     fi
+
                     echo "Checking DB container status..."
-                    docker inspect -f '{{.State.Running}}' ${DB_CONTAINER}
-                    docker volume inspect ${DB_VOLUME} || echo "Volume will be created"
+
+                    DB_RUNNING=$(docker inspect \
+                        -f '{{.State.Running}}' \
+                        ${DB_CONTAINER})
+
+                    if [ "$DB_RUNNING" != "true" ]; then
+                        echo "❌ Database container is not running."
+                        exit 1
+                    fi
+
+                    docker volume inspect ${DB_VOLUME} || \
+                        echo "Volume will be created"
+
+                    echo "✅ Database container is running."
                 '''
             }
         }
 
-        stage('Build & Push GHCR Image') {
+        stage('Build Docker Image') {
             steps {
-                retry(3) {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'ghcr-credentials',
-                        passwordVariable: 'GHCR_TOKEN',
-                        usernameVariable: 'GHCR_USER')]) {
-                        sh '''
-                            echo "$GHCR_TOKEN" | docker login ghcr.io \
-                                -u "$GHCR_USER" --password-stdin
-                            docker build \
-                                -t ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} .
-                            docker push \
-                                ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
-                        '''
-                    }
-                }
+                sh '''
+                    docker build \
+                        -t ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} .
+                '''
             }
         }
 
@@ -107,12 +125,35 @@ pipeline {
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
-                            --exit-code 0 \
+                            --exit-code 1 \
                             --severity HIGH,CRITICAL \
                             --ignore-unfixed \
                             --no-progress \
-                            ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} || true
+                            ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
                     '''
+                }
+            }
+        }
+
+        stage('Push Image to GHCR') {
+            steps {
+                retry(3) {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'ghcr-credentials',
+                            passwordVariable: 'GHCR_TOKEN',
+                            usernameVariable: 'GHCR_USER'
+                        )
+                    ]) {
+                        sh '''
+                            echo "$GHCR_TOKEN" | docker login ghcr.io \
+                                -u "$GHCR_USER" \
+                                --password-stdin
+
+                            docker push \
+                                ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                        '''
+                    }
                 }
             }
         }
@@ -121,6 +162,7 @@ pipeline {
             steps {
                 sh '''
                     docker rm -f math-api_math-api_1 math-api || true
+
                     docker run -d \
                         --name math-api \
                         --network math-api_default \
@@ -133,13 +175,13 @@ pipeline {
                 '''
             }
         }
-
     }
 
     post {
         success {
             echo '✅ Pipeline completed successfully!'
         }
+
         failure {
             echo '❌ Pipeline failed — check logs above!'
         }
