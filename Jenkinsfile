@@ -36,14 +36,15 @@ pipeline {
 
         stage('Gitleaks Secret Scan') {
             steps {
-                sh '''
-                    tar -cf - --exclude='.git' . | docker run --rm -i zricethezav/gitleaks:latest detect \
-                        --source=/dev/stdin \
-                        --no-git \
-                        --verbose || true
+        	sh '''
+            	    tar -cf - --exclude='.git' . | docker run --rm -i --entrypoint sh zricethezav/gitleaks:latest -c "
+                        mkdir -p /tmp/scan && \
+                        tar -xf - -C /tmp/scan && \
+                        gitleaks dir /tmp/scan --verbose
+                    " || true
                 '''
-            }
-        }
+    }
+}
 
         stage('SonarQube Analysis') {
             steps {
