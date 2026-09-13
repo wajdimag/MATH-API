@@ -13,7 +13,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout SCM') {
             steps {
                 retry(3) {
@@ -52,9 +51,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(
-                    credentialsId: 'SONAR_TOKEN',
-                    variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     sh '''
                         docker run --rm \
                             --network math-api_default \
@@ -62,7 +59,7 @@ pipeline {
                             sonarsource/sonar-scanner-cli \
                             -Dsonar.host.url="http://sonarqube:9000" \
                             -Dsonar.projectKey="math-api" \
-                            -Dsonar.token="${SONAR_TOKEN}"
+                            -Dsonar.login="${SONAR_TOKEN}"
                     '''
                 }
             }
@@ -83,21 +80,17 @@ pipeline {
                         fi
                     fi
 
-                    echo "Checking DB container status..."
+                    echo "Checking DB container availability and persistent storage..."
 
-                    DB_RUNNING=$(docker inspect \
-                        -f '{{.State.Running}}' \
-                        ${DB_CONTAINER})
+                    DB_RUNNING=$(docker inspect -f '{{.State.Running}}' ${DB_CONTAINER})
 
                     if [ "$DB_RUNNING" != "true" ]; then
                         echo "❌ Database container is not running."
                         exit 1
                     fi
 
-                    docker volume inspect ${DB_VOLUME} || \
-                        echo "Volume will be created"
-
-                    echo "✅ Database container is running."
+                    docker volume inspect ${DB_VOLUME} || echo "Volume ${DB_VOLUME} will be created"
+                    echo "✅ Database container is running with persistent storage."
                 '''
             }
         }
@@ -134,12 +127,11 @@ pipeline {
                     withCredentials([usernamePassword(
                         credentialsId: 'ghcr-credentials',
                         passwordVariable: 'GHCR_TOKEN',
-                        usernameVariable: 'GHCR_USER')]) {
+                        usernameVariable: 'GHCR_USER'
+                    )]) {
                         sh '''
-                            echo "$GHCR_TOKEN" | docker login ghcr.io \
-                                -u "$GHCR_USER" --password-stdin
-                            docker push \
-                                ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
+                            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+                            docker push ${GHCR_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
                         '''
                     }
                 }
@@ -162,10 +154,12 @@ pipeline {
                 '''
             }
         }
-
     }
 
     post {
+        always {
+            sh 'docker logout ghcr.io || true'
+        }
         success {
             echo '✅ Pipeline completed successfully!'
         }
