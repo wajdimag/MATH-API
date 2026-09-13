@@ -37,15 +37,13 @@ pipeline {
         stage('Gitleaks Secret Scan') {
             steps {
                 sh '''
-                    docker run --rm \
-                        -v $(pwd):/path \
-                        zricethezav/gitleaks:latest detect \
-                        --source=/path \
+                    tar -cf - --exclude='.git' . | docker run --rm -i zricethezav/gitleaks:latest detect \
+                        --source=/dev/stdin \
                         --no-git \
                         --verbose || true
                 '''
-    }
-}
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
@@ -145,5 +143,4 @@ pipeline {
             echo '❌ Pipeline failed — check logs above!'
         }
     }
-
 }
