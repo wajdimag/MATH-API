@@ -53,16 +53,23 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     sh '''
-                        docker run --rm \
+                        tar -cf - --exclude='.git' --exclude='node_modules' . | \
+                        docker run --rm -i \
                             --network math-api_default \
-                            -v "$(pwd):/usr/src" \
+                            --entrypoint sh \
                             sonarsource/sonar-scanner-cli \
-                            -Dsonar.host.url="http://sonarqube:9000" \
-                            -Dsonar.projectKey="Math-API" \
-                            -Dsonar.login="${SONAR_TOKEN}"\
-                            -Dsonar.sources="."\
-                            -Dsonar.exclusions="**/node_modules/**,**/coverage/**" \
-                            -Dsonar.scm.disabled=true
+                            -c "
+                                mkdir -p /usr/src && \
+                                tar -xf - -C /usr/src && \
+                                cd /usr/src && \
+                                sonar-scanner \
+                                    -Dsonar.host.url='http://sonarqube:9000' \
+                                    -Dsonar.projectKey='Math-API' \
+                                    -Dsonar.login='${SONAR_TOKEN}' \
+                                    -Dsonar.sources='.' \
+                                    -Dsonar.exclusions='**/node_modules/**,**/coverage/**' \
+                                    -Dsonar.scm.disabled=true
+                            "
                     '''
                 }
             }
