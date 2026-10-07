@@ -60,7 +60,9 @@ pipeline {
                             -Dsonar.host.url="http://sonarqube:9000" \
                             -Dsonar.projectKey="Math-API" \
                             -Dsonar.login="${SONAR_TOKEN}"\
-                            -Dsonar.sources="."
+                            -Dsonar.sources="."\
+                            -Dsonar.exclusions="**/node_modules/**,**/coverage/**" \
+                            -Dsonar.scm.disabled=true
                     '''
                 }
             }
