@@ -24,4 +24,4 @@ All math operations are `POST` requests and require a JSON body. Input validatio
 
 ### Installation
 ```bash
-npm install
+npm install# Test Automated Pipeline
