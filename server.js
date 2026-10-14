@@ -1,10 +1,12 @@
 const express = require('express');
+const cors = require('cors'); // <--- new
 const client = require('prom-client');
 const os = require('os'); // Imported OS module to retrieve container hostname
 
 const app = express();
 
 app.disable('x-powered-by'); // Hide the X-Powered-By: Express (sonarqube)
+app.use(cors()); // <--- new (Allows all origins during local dev)
 
 const verifyToken = require('./auth'); 
 const mathRoutes = require('./Routes/MathRoutes');
