@@ -87,8 +87,8 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    command: tunnel --url http://nginx-proxy:80
-
+    command: "tunnel --no-autoupdate run --token eyJhIjoiNDc5Zjg0YzhiMmZkODQ1ZTZmYTQwMzU4NGQ3NzQ0Y2MiLCJ0IjoiOGY5OWE3YTEtZTkyZi00NDhlLTg1MjAtY2EwYWY1MWVjNmVlIiwicyI6IllUYzJNR1EwTTJNdE0yUTJNeTAwT0dFNExUbGhOVFF0TVdNMk1qZzFNekl4WVRWaSJ9"
+    
   jenkins:
     image: jenkins/jenkins:lts
     container_name: jenkins
