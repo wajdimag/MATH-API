@@ -15,22 +15,22 @@ COPY . .
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# 1. Upgrade Alpine OS packages
+# 1. Mise à jour des paquets système Alpine
 RUN apk update && apk upgrade --no-cache
 
-# 2. Upgrade global npm CLI to patch bundled npm vulnerabilities
-RUN npm install -g npm@latest
+# 2. Mise à jour de npm global vers la dernière version 10.x (compatible Node 20)
+RUN npm install -g npm@10
 
 ENV NODE_ENV=production
 
-# Install ONLY production dependencies
+# Installation des dépendances de production uniquement
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy application source code
+# Copie du code source
 COPY . .
 
-# Security Best Practice: Run as non-root user
+# Sécurité : exécution sous un utilisateur non-root
 USER node
 
 EXPOSE 3000
