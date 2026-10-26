@@ -15,7 +15,7 @@ COPY . .
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Upgrade Alpine OS packages to patch system vulnerabilities
+# Upgrade Alpine OS system packages to clear base image CVEs
 RUN apk update && apk upgrade --no-cache
 
 ENV NODE_ENV=production
@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy application source code from host
+# Copy application source code
 COPY . .
 
 # Security Best Practice: Run as non-root user
