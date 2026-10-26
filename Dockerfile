@@ -15,8 +15,11 @@ COPY . .
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Upgrade Alpine OS system packages to clear base image CVEs
+# 1. Upgrade Alpine OS packages
 RUN apk update && apk upgrade --no-cache
+
+# 2. Upgrade global npm CLI to patch bundled npm vulnerabilities
+RUN npm install -g npm@latest
 
 ENV NODE_ENV=production
 
