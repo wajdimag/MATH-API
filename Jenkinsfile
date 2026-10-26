@@ -121,7 +121,7 @@ pipeline {
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image \
-                            --exit-code 0 \
+                            --exit-code 1 \
                             --severity HIGH,CRITICAL \
                             --ignore-unfixed \
                             --no-progress \
