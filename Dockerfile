@@ -15,6 +15,9 @@ COPY . .
 FROM node:20-alpine AS runner
 WORKDIR /app
 
+# Upgrade Alpine OS packages to patch system vulnerabilities
+RUN apk update && apk upgrade --no-cache
+
 ENV NODE_ENV=production
 
 # Install ONLY production dependencies
