@@ -1,2 +1,2 @@
-// Fake AWS Secret for Gitleaks Pipeline Attack Simulation
-const AWS_SECRET_KEY = "AKIAIOSFODNN7EXAMPLE";
+// Fake GitHub Token for Gitleaks Pipeline Failure Test
+const GITHUB_TOKEN = "ghp_999999999999999999999999999999999999";
