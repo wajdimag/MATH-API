@@ -10,15 +10,16 @@ RUN npm ci
 COPY . .
 
 # ==========================================
-# Stage 2: Clean Production Runtime
+# Stage 2: Testing Vulnerable Base Image
 # ==========================================
-FROM node:14-alpine AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm ci --only=production
+# Copy compiled node_modules from Stage 1 to avoid npm CLI lockfile errors
+COPY --from=builder /app/node_modules ./node_modules
 
 COPY . .
 
