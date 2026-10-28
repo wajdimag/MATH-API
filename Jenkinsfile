@@ -68,7 +68,8 @@ pipeline {
                                     -Dsonar.login='${SONAR_TOKEN}' \
                                     -Dsonar.sources='.' \
                                     -Dsonar.exclusions='**/node_modules/**,**/coverage/**' \
-                                    -Dsonar.scm.disabled=true
+                                    -Dsonar.scm.disabled=true \
+                                    -Dsonar.qualitygate.wait=true
                             "
                     '''
                 }
