@@ -63,14 +63,7 @@ pipeline {
                                 tar -xf - -C /usr/src && \
                                 cd /usr/src && \
                                 sonar-scanner \
-                                    -Dsonar.host.url='http://sonarqube:9000' \
-                                    -Dsonar.projectKey='Math-API' \
                                     -Dsonar.login='${SONAR_TOKEN}' \
-                                    -Dsonar.sources='.' \
-                                    -Dsonar.tests='Tests' \
-				    -Dsonar.exclusions='**/node_modules/**,coverage/**,**/Tests/**,**/*.html,**/public/**' \
-                                    -Dsonar.javascript.lcov.reportPaths='coverage/lcov.info' \
-                                    -Dsonar.scm.disabled=true \
                                     -Dsonar.qualitygate.wait=true
                             "
                     '''
