@@ -67,7 +67,8 @@ pipeline {
                                     -Dsonar.projectKey='Math-API' \
                                     -Dsonar.login='${SONAR_TOKEN}' \
                                     -Dsonar.sources='.' \
-                                    -Dsonar.exclusions='**/node_modules/**,coverage/**,**/*.test.js,**/test/**' \
+                                    -Dsonar.tests='Tests' \
+				    -Dsonar.exclusions='**/node_modules/**,coverage/**,**/Tests/**,**/test/**,**/*.test.js' \
                                     -Dsonar.javascript.lcov.reportPaths='coverage/lcov.info' \
                                     -Dsonar.scm.disabled=true \
                                     -Dsonar.qualitygate.wait=true
