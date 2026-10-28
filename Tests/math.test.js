@@ -170,3 +170,26 @@ describe('Math API Comprehensive Endpoints Suite', () => {
     });
 
 });
+// ==========================================
+    // 10. BRANCH & ERROR COVERAGE (SonarQube Boost)
+    // ==========================================
+    describe('Edge Cases for 85%+ Coverage', () => {
+        it('should hit missing parameter branch in /subtract', async () => {
+            const res = await request(app).post('/subtract').send({});
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('should hit missing parameter branch in /power', async () => {
+            const res = await request(app).post('/power').send({});
+            expect(res.statusCode).toBe(400);
+        });
+
+
+        it('should hit express error handler in server.js', async () => {
+            const res = await request(app)
+                .post('/add')
+                .set('Content-Type', 'application/json')
+                .send('{"invalid_json": ');
+            expect(res.statusCode).toBe(400);
+        });
+    });
