@@ -68,7 +68,7 @@ pipeline {
                                     -Dsonar.login='${SONAR_TOKEN}' \
                                     -Dsonar.sources='.' \
                                     -Dsonar.tests='Tests' \
-				    -Dsonar.exclusions='**/node_modules/**,coverage/**,**/Tests/**,**/test/**,**/*.test.js' \
+				    -Dsonar.exclusions='**/node_modules/**,coverage/**,**/Tests/**,**/*.html,**/public/**' \
                                     -Dsonar.javascript.lcov.reportPaths='coverage/lcov.info' \
                                     -Dsonar.scm.disabled=true \
                                     -Dsonar.qualitygate.wait=true
